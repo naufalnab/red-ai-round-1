@@ -32,6 +32,14 @@ export const addToCart = async (req: Request, res: Response) => {
       });
     }
 
+    // Validate quantity is a positive integer
+    if (!Number.isInteger(qty) || qty <= 0) {
+      return res.status(400).json({
+        error: 'Quantity must be a positive integer',
+        message: 'Quantity must be a positive integer'
+      });
+    }
+
     // Check if product exists
     const product = await getQuery<Product>(
       'SELECT * FROM products WHERE id = ?',
