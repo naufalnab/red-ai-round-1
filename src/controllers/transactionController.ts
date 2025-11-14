@@ -53,6 +53,19 @@ export const checkout = async (req: Request, res: Response) => {
       });
     }
 
+    // Check if cart has already been checked out
+    const existingTransaction = await getQuery<any>(
+      'SELECT * FROM transactions WHERE cart_id = ?',
+      [cart_id]
+    );
+
+    if (existingTransaction) {
+      return res.status(409).json({
+        error: 'Cart has already been checked out',
+        message: 'Cart has already been checked out'
+      });
+    }
+
     // Calculate subtotal for this cart item
     const cartDetails = await getQuery<any>(
       `SELECT c.*, p.price, (c.qty * p.price) as subtotal
@@ -70,13 +83,25 @@ export const checkout = async (req: Request, res: Response) => {
     }
 
     const subtotal = cartDetails.subtotal;
+    
+    // Validate quantity is positive
+    if (cartDetails.qty <= 0) {
+      return res.status(400).json({
+        error: 'Cart quantity must be positive',
+        message: 'Cart quantity must be positive'
+      });
+    }
+    
     const total = subtotal + admin_fee;
 
-    // Create transaction
+    // Create transaction and delete cart item
     await runQuery(
       'INSERT INTO transactions (user_id, cart_id, admin_fee, subtotal, total) VALUES (?, ?, ?, ?, ?)',
       [userId, cart_id, admin_fee, subtotal, total]
     );
+    
+    // Delete cart item after checkout
+    await runQuery('DELETE FROM cart WHERE id = ?', [cart_id]);
 
     // Get the transaction ID
     const transaction = await getQuery<any>(
