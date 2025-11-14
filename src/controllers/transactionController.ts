@@ -32,6 +32,14 @@ export const checkout = async (req: Request, res: Response) => {
       });
     }
 
+    // Validate admin_fee is non-negative
+    if (admin_fee < 0) {
+      return res.status(400).json({
+        error: 'Admin fee cannot be negative',
+        message: 'Admin fee cannot be negative'
+      });
+    }
+
     // Verify cart belongs to user
     const cartItem = await getQuery<any>(
       'SELECT * FROM cart WHERE id = ? AND user_id = ?',
