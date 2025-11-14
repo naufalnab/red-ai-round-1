@@ -62,6 +62,14 @@ export const signUp = async (req: Request, res: Response) => {
     const trimmedAddress = address.trim();
     const trimmedPassword = password.trim();
 
+    // Validate email format
+    if (!isValidEmail(trimmedEmail)) {
+      return res.status(400).json({
+        error: 'Invalid email format',
+        message: 'Invalid email format'
+      });
+    }
+
     // Validate date format
     if (!isValidDate(birthdate)) {
       return res.status(400).json({
